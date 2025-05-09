@@ -77,6 +77,14 @@ app.post('/chat', async (req, res) => {
       { role: 'user', content: user_input }
     ];
 
+    // 디버깅: OpenAI 호출 파라미터 로그
+    console.log('OpenAI 호출 파라미터:', JSON.stringify({
+      model: 'gpt-4o',
+      messages,
+      tools: [defineSaveEncounterSchema],
+      tool_choice: 'auto'
+    }, null, 2));
+
     // 3. OpenAI 호출 (Function Calling)
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
@@ -85,7 +93,10 @@ app.post('/chat', async (req, res) => {
       tool_choice: 'auto'
     });
 
+    // 디버깅: OpenAI 응답 전체 로그
+    console.log('OpenAI 응답:', JSON.stringify(completion, null, 2));
     const choice = completion.choices[0];
+    console.log('choice:', JSON.stringify(choice, null, 2));
 
     // 4. tool_calls 처리
     if (choice.finish_reason === 'tool_calls' && choice.message.tool_calls) {
@@ -116,13 +127,15 @@ app.post('/chat', async (req, res) => {
       }
     }
 
-    // 5. 일반 답변 반환
+    // 5. 일반 답변 반환 (null 방지 + 안내 메시지)
     return res.json({
-      message: choice.message.content
+      message: choice.message.content || '죄송해요, 답변을 준비하지 못했어요.'
     });
 
   } catch (error) {
     console.error('chat error:', error);
+    // 에러 전체 출력
+    console.error('chat error(전체):', JSON.stringify(error, null, 2));
     res.status(500).json({ error: error.message || error });
   }
 });
