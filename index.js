@@ -141,7 +141,7 @@ app.post('/generate-card', async (req, res) => {
     // 프로필 조회
     const { data: profile, error: profileErr } = await supabase
       .from('profiles')
-      .select('birthdate, gender')
+      .select('birth_date, gender')
       .eq('user_id', user_id)
       .single();
     if (profileErr || !profile) throw profileErr || new Error('프로필 조회 실패');
