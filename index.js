@@ -56,7 +56,7 @@ app.post('/chat', async (req, res) => {
       return res.status(400).json({ error: 'user_id, thread_id, user_input 필수' });
     }
 
-    // 1️⃣ 최근 대화 20개
+    // 1️⃣ 최근 대화 20개
     const { data: history, error: historyErr } = await supabase
       .from('chat_messages')
       .select('role, content')
@@ -66,14 +66,14 @@ app.post('/chat', async (req, res) => {
       .limit(20);
     if (historyErr) throw historyErr;
 
-    // 2️⃣ messages 배열 구성
+    // 2️⃣ messages 배열 구성
     const messages = [
       { role: 'system', content: PROMPT },
       ...(history || []),
       { role: 'user', content: user_input }
     ];
 
-    // 3️⃣ OpenAI 호출
+    // 3️⃣ OpenAI 호출
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages,
@@ -83,7 +83,7 @@ app.post('/chat', async (req, res) => {
 
     const choice = completion.choices[0];
 
-    // 4️⃣ tool‑calls 처리
+    // 4️⃣ tool‑calls 처리
     if (choice.finish_reason === 'tool_calls' && choice.message.tool_calls) {
       for (const toolCall of choice.message.tool_calls) {
         if (toolCall.function.name === 'save_encounter') {
@@ -112,7 +112,7 @@ app.post('/chat', async (req, res) => {
       }
     }
 
-    // 5️⃣ 일반 assistant 답변 반환 (choices 구조 유지)
+    // 5️⃣ 일반 assistant 답변 반환 (choices 구조 유지)
     return res.json({
       choices: [
         {
@@ -141,10 +141,13 @@ app.post('/generate-card', async (req, res) => {
     // 프로필 조회
     const { data: profile, error: profileErr } = await supabase
       .from('profiles')
-      .select('name, birthdate, gender')
+      .select('birthdate, gender')
       .eq('user_id', user_id)
       .single();
     if (profileErr || !profile) throw profileErr || new Error('프로필 조회 실패');
+
+    // 이름 필드 제거 또는 대체
+    profile.name = '이름 없음';
 
     // 증상 데이터 조회
     const { data: encounter, error: encErr } = await supabase
